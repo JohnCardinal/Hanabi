@@ -13,9 +13,9 @@ final_scores = []
 in_game_prints = False
 
 # Current 50 Game Scores:
-# Best: 22
+# Best: 23
 # Worst: 16
-# Average: 19.32000
+# Average: 19.42000
 
 
 class Game:
@@ -152,6 +152,43 @@ class Player:
                         clue_up = next_player.hand[playable_card_index].number
                     elif card_knowledge.color is None:
                         clue_up = next_player.hand[playable_card_index].color
+                if clue_up is not None:
+                    self.give_clue(clue_up, next_player)
+                    return
+            #useless cards will never be < 0... duh, so I changed it to useless cards == 0
+            if len(self.get_reserved_cards_for_player(next_player)) > 0 and len(self.get_known_useless_cards(next_player)) == 0:
+
+                match_bar = 2 #only matches greater than or equal to the bar pass
+                age_index_bar = 1 #only matches less than or equal to the bar pass
+
+                # I'll need to rerun tests to find the best pairing, but the fix seems to be an improvement regardless
+                #TODO: rerun pairing tests
+
+                #in tests of 1000 games with useless cards == 0 turned off, match 2 and age 1 preformed
+                #better all around with a best game of 23 and an average of 19.189
+                #over no reserved clues score of best game 22 and average 19.137
+
+                highest_match = 0
+                for index, reservable_card_index in enumerate(next_player.hand_age):
+                    if index <= age_index_bar and reservable_card_index in self.get_reserved_cards_for_player(next_player):
+                        card_knowledge = next_player.knowledge[reservable_card_index]
+                        reservable_card = next_player.hand[reservable_card_index]
+                        if card_knowledge.number is None:
+                            number_match = 0
+                            for card in next_player.hand:
+                                if card is not None and getattr(card, 'number') == reservable_card.number:
+                                    number_match += 1
+                            if number_match >= match_bar and number_match > highest_match:
+                                clue_up = reservable_card.number
+                                highest_match = number_match
+                        if card_knowledge.color is None:
+                            color_match = 0
+                            for card in next_player.hand:
+                                if card is not None and getattr(card, 'color') == reservable_card.color:
+                                    color_match += 1
+                            if color_match >= match_bar and color_match > highest_match:
+                                clue_up = reservable_card.color
+                                highest_match = color_match
                 if clue_up is not None:
                     self.give_clue(clue_up, next_player)
                     return
